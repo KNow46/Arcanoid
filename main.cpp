@@ -9,9 +9,11 @@
 
 using namespace std;
 
-
+//dimensions of canvas
 const int canvasWidth = 800;
 const int canvasHeight = 600;
+
+//basic class used to inheritance
 class GameObject
 {
 protected:
@@ -56,6 +58,7 @@ public:
 	
 };
 
+//Player's racket class
 class Player : public GameObject
 {
 private:
@@ -74,11 +77,13 @@ public:
 		return standardWidth;
 	}
 };
+
+//flying booster class
 class Booster : public GameObject
 {
 private:
-	float speed;
-	string type;
+	float speed;//falling speed
+	string type;//positive or negative 
 public:
 	Booster()
 	{
@@ -97,7 +102,7 @@ public:
 
 		speed = sp;
 	}
-	void setTypeRand()
+	void setTypeRand()//set type of flying booster randomly
 	{
 		if (rand() % 2 == 0)
 			type = "negative";
@@ -154,24 +159,28 @@ public:
 	}
 	void moveX(float speed)
 	{
+
 		x += speed;
+		//left ball-canvas reflection
 		if (x < 20)
-		{
-			x = 21;
+		{ 
+			x = 23; //imperceptible teleport not to let ball stuck in the edge
 			speedX = -speedX;
 		}
+		//right ball-canvas reflection
 		if (x + width + 20 > canvasWidth)
 		{
-			x = canvasWidth - 21 - width;
+			x = canvasWidth - 23 - width;  //imperceptible teleport not to let ball stuck in the edge
 			speedX = -speedX;
 		}
 	}
 	void moveY(float speed)
 	{
 		y += speed;
+		//up ball-canvas reflection
 		if(y < 80)
 		{ 
-			y = 81;
+			y = 83;  //imperceptible teleport not to let ball stuck in the edge
 			speedY = -speedY;
 		}
 	}
@@ -181,7 +190,7 @@ public:
 class Block : public GameObject
 {
 private:
-	string blockType;
+	string blockType; //for now "white"(1hp), "green"(2hp) or "gold" (indestructible)
 	int hp;
 public:
 	Block(string btype):blockType(btype)
@@ -195,7 +204,6 @@ public:
 		{
 			hp = 2;
 		}
-		
 	}
 	void getHit()
 	{
@@ -223,6 +231,9 @@ public:
 		}
 	}
 };
+
+//@blocks is stack of blocks declared in board class
+//@level is currently achieved level
 void generateLevel(stack<Block>& blocks, int level)
 {
 	if (level == 1)
@@ -233,8 +244,8 @@ void generateLevel(stack<Block>& blocks, int level)
 			for (int i = 0; i < 5; i++)
 			{
 
-				blocks.push(block);
-				blocks.top().setX(i * 120 + 130);
+				blocks.push(block);//adding new block to stack
+				blocks.top().setX(i * 120 + 130);//setting block location
 				blocks.top().setY(j * 80 + 290);
 			}
 		}
@@ -258,7 +269,7 @@ void generateLevel(stack<Block>& blocks, int level)
 				blocks.top().setX(i * 120 + 130);
 				blocks.top().setY(j * 80 + 130);
 				if (j % 2 == 1)
-					block.setType("green");
+					block.setType("green");//changing type of blocks witch will be generate
 				else
 					block.setType("white");
 			}
@@ -297,50 +308,71 @@ void generateLevel(stack<Block>& blocks, int level)
 	
 }
 
-struct corner
+struct corner // one of eight points on ball used to collision with blocks
 {
 	string name;
 	int x;
 	int y;
 };
-struct activeBooster //
+
+
+struct activeBooster //size booster actually possesed by player
 {
 	string type;
 	time_t end;
 };
+
+//main game class responsible for most of the
 class Board : public Framework
 {
 
 private:
 	int goldBlocksAmount = 0;
-	int collisionTime = 0;
-	int boosterCollisionTime = 300;
+	int collisionTime = 0; //used not to let the ball being reflected few times by rocket
+	int boosterCollisionTime = 300; //used not to let booster being takenfew times
 	int currentLevel = 1;
+	//current position of mouse, updated in onMouseMove method
 	int mouseX;
 	int mouseY;
-	Sprite* playerSprite[3];
+
+	Sprite* playerSprite[3]; //sprites used to animate player's rocket
 	Sprite* ballSprite;
 	Sprite* greenBlockSprite;
 	Sprite* damagedGreenBlockSprite;
 	Sprite* whiteBlockSprite;
 	Sprite* goldBlockSprite;
 	Sprite* backgroundSprite;
-	Sprite* flyingBoosterSprite[2];
-	Sprite* boosterTimerSprite[2];
+	Sprite* flyingBoosterSprite[2]; //two sprites, [0] positive size booster, [1] negative size booster
+	 //sprites used to display boosters live time
+	Sprite* boosterTimerSprite[2]; 
 	Sprite* antyBoosterTimerSprite[2];
+
 	Sprite* loseScreenSprite;
 	Sprite* loseScreenHoveredSprite;
-	bool loseScreenHovered = false;
-	Player player;
+
+	bool loseScreenHovered = false; 
+
+	Player player; //player's rocket object
+
 	Ball ball;
-	stack <Block> blocks;
+
+	stack <Block> blocks; 
+
 	time_t time1 = time(NULL);
 	time_t time2 = time(NULL);
-	stack<activeBooster> activeBoosters;
+
+	stack<activeBooster> activeBoosters;//currently active boosters
+
 	Booster flyingBooster;
-	int rocketAniamtionCounter = 0;
+
+	int rocketAniamtionCounter = 0;//enables racket animations
+
 	bool lose = false;
-	bool click = false;
+
+	bool click = true;//false if any of mouse button is released
+
+	float ballInitialSpeedX = -0.6;
+	float ballInitialSpeedY= -0.8;
 public:
 
 	virtual void PreInit(int& width, int& height, bool& fullscreen)
@@ -348,7 +380,6 @@ public:
 		width = canvasWidth;
 		height = canvasHeight;
 		fullscreen = false;
-
 	}
 
 	virtual bool Init() 
@@ -399,10 +430,13 @@ public:
 			setSpriteSize(whiteBlockSprite, blocks.top().getWidth(), blocks.top().getHeight());
 			setSpriteSize(goldBlockSprite, blocks.top().getWidth(), blocks.top().getHeight());
 		}
-		ball.setSpeedY(-0.8);
-		ball.setSpeedX(-0.5);
+		ball.setSpeedY(ballInitialSpeedY);
+		ball.setSpeedX(ballInitialSpeedX);
+
 		time1 = time(NULL);
 		time2 = time(NULL) - 15;
+		ball.setX(400);
+		ball.setY(500);
 		return true;
 	}
 
@@ -515,8 +549,8 @@ public:
 			{
 				blocks.pop();
 			}
-			ball.setSpeedX(-0.5);
-			ball.setSpeedY(-0.5);
+			ball.setSpeedX(ballInitialSpeedX);
+			ball.setSpeedY(ballInitialSpeedY);
 			ball.setX(400);
 			ball.setY(500);
 			generateLevel(blocks,currentLevel);
@@ -547,8 +581,8 @@ public:
 				{
 					blocks.pop();
 				}
-				ball.setSpeedX(-0.5);
-				ball.setSpeedY(-0.5);
+				ball.setSpeedX(ballInitialSpeedX);
+				ball.setSpeedY(ballInitialSpeedY);
 				ball.setX(400);
 				ball.setY(500);
 				
@@ -745,78 +779,88 @@ private:
 			}
 			if (cornerInside != -1)
 			{
+				float safetyTeleport = 3;
+
 				if (cornerInside == 0)
 				{
+					cout << "0";
 					if (abs(ballCorners[0].x - (blocks.top().getX() + blocks.top().getWidth())) < abs(ballCorners[0].y - (blocks.top().getY() + blocks.top().getHeight())))
 					{
-						ball.setX(blocks.top().getX() + blocks.top().getWidth());
+						ball.setX(blocks.top().getX() + blocks.top().getWidth() + safetyTeleport);
 						ball.setSpeedX(-ball.getSpeedX());
 					}
 					else
 					{
-						ball.setY(blocks.top().getY() + blocks.top().getHeight());
+						ball.setY(blocks.top().getY() + blocks.top().getHeight() + safetyTeleport);
 						ball.setSpeedY(-ball.getSpeedY());
 					}
 				}
 				if (cornerInside == 2)
 				{
+					cout << "2";
 					if (abs(ballCorners[2].x - blocks.top().getX()) < abs(ballCorners[2].y - (blocks.top().getY() + blocks.top().getHeight())))
 					{
-						ball.setX(blocks.top().getX() - ball.getWidth() - 1);
+						ball.setX(blocks.top().getX() - ball.getWidth() - safetyTeleport);
 						ball.setSpeedX(-ball.getSpeedX());
 					}
 					else
 					{
-						ball.setY(blocks.top().getY() + blocks.top().getHeight() + 1);
+						ball.setY(blocks.top().getY() + blocks.top().getHeight() + safetyTeleport);
 						ball.setSpeedY(-ball.getSpeedY());
 					}
 				}
 				if (cornerInside == 5)
 				{
+					cout << "5";
 					if (abs(ballCorners[5].x - (blocks.top().getX() + blocks.top().getWidth())) < abs(ballCorners[5].y - blocks.top().getY()))
 					{
-						ball.setX(blocks.top().getX() + blocks.top().getWidth());
+						ball.setX(blocks.top().getX() + blocks.top().getWidth() + safetyTeleport);
 						ball.setSpeedX(-ball.getSpeedX());
 					}
 					else
 					{
-						ball.setY(blocks.top().getY() - ball.getHeight());
+						ball.setY(blocks.top().getY() - ball.getHeight() - safetyTeleport);
 						ball.setSpeedY(-ball.getSpeedY());
 					}
 				}
 				if (cornerInside == 7)
 				{
+					cout << "7";
 					if (abs(ballCorners[7].x - blocks.top().getX()) < abs(ballCorners[7].y - blocks.top().getY()))
 					{
-						ball.setX(blocks.top().getX() - ball.getWidth() - 1);
+						ball.setX(blocks.top().getX() - ball.getWidth() - safetyTeleport);
 						ball.setSpeedX(-ball.getSpeedX());
 					}
 					else
 					{
-						ball.setY(blocks.top().getY() - ball.getHeight() - 1);
+						ball.setY(blocks.top().getY() - ball.getHeight() - safetyTeleport);
 						ball.setSpeedY(-ball.getSpeedY());
 					}
 				}
 				if (cornerInside == 1)
 				{
+					cout << "1";
 					ball.setSpeedY(-ball.getSpeedY());
-					ball.setY(blocks.top().getY() + blocks.top().getHeight() + 1);
+					ball.setY(blocks.top().getY() + blocks.top().getHeight() + safetyTeleport);
 				}
 				if (cornerInside == 3)
 				{
+					cout << "3";
 					ball.setSpeedX(-ball.getSpeedX());
-					ball.setX(blocks.top().getX() + blocks.top().getWidth());
+					ball.setX(blocks.top().getX() + blocks.top().getWidth() + safetyTeleport);
 				}
 				if (cornerInside == 4)
 				{
+					cout << "4";
 					ball.setSpeedX(-ball.getSpeedX());
-					ball.setX(blocks.top().getX() - ball.getWidth());
+					ball.setX(blocks.top().getX() - ball.getWidth() - safetyTeleport);
 
 				}
 				if (cornerInside == 6)
 				{
+					cout << "6";
 					ball.setSpeedY(-ball.getSpeedY());
-					ball.setY(blocks.top().getY()- ball.getHeight()-1);
+					ball.setY(blocks.top().getY()- ball.getHeight() - safetyTeleport);
 				}
 				{
 					blocks.top().getHit();
