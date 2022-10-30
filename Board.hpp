@@ -1,3 +1,16 @@
+struct corner // one of eight points on ball used to collision with blocks
+{
+	string name;
+	int x;
+	int y;
+};
+
+struct activeBooster //size booster actually possesed by player
+{
+	string type;
+	time_t end;
+};
+
 //main game class responsible for most of the actions
 class Board : public Framework
 {
