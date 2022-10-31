@@ -4,17 +4,14 @@ private:
 	string blockType; //for now "white"(1hp), "green"(2hp) or "gold" (indestructible)
 	int hp;
 public:
-	Block(string btype) :blockType(btype)
+	Block(string bType)
 	{
-		x = 500;
-		y = 200;
+		position.x = 500;
+		position.y = 200;
 		height = 15;
 		width = 50;
-		hp = 1;
-		if (blockType == "green")
-		{
-			hp = 2;
-		}
+
+		setType(bType);
 	}
 	void getHit()
 	{
@@ -37,6 +34,10 @@ public:
 			hp = 2;
 		}
 		if (blockType == "white")
+		{
+			hp = 1;
+		}
+		if (blockType == "gold")
 		{
 			hp = 1;
 		}

@@ -1,36 +1,44 @@
+struct Position
+{
+	float x;
+	float y;
+};
+
 //basic class used to inheritance
 class GameObject
 {
 protected:
-	float x, y, width, height;
+	float width, height;
+	Position position;
 public:
-	GameObject() : x(10), y(10), width(10), height(10)
+	GameObject() :  width(10), height(10)
 	{
-		;
+		position.x = 0;
+		position.y = 0;
 	}
-	void setX(float X)
+	void setX(float x)
 	{
-		x = X;
+		position.x = x;
 	}
-	void setY(float Y)
+	void setY(float y)
 	{
-		y = Y;
+		position.y = y;
 	}
-	void setWidth(float WIDTH)
+	void setWidth(float x)
 	{
-		width = WIDTH;
+		width = x;
 	}
-	void setHeight(float HEIGHT)
+	void setHeight(float y)
 	{
-		height = HEIGHT;
+		height = y;
 	}
 	float getX()
 	{
-		return x;
+		return position.x;
 	}
 	float getY()
 	{
-		return y;
+		return position.y;
 	}
 	float getWidth()
 	{

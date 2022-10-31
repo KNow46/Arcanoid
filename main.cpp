@@ -7,16 +7,18 @@
 #include <ctime>
 #include <stdlib.h> 
 #include <cmath>
+//#include <mmsystem.h>
+
+
 
 using namespace std;
-
 //dimensions of canvas
 const int canvasWidth = 800;
 const int canvasHeight = 600;
 
 #include "GameObject.hpp"
 #include "Player.hpp"
-#include "flyingBooster.hpp"
+#include "Booster.hpp"
 #include "Ball.hpp"
 #include "Block.hpp"
 #include "generateLevel.hpp"
@@ -24,6 +26,7 @@ const int canvasHeight = 600;
 
 int main(int argc, char* argv[])
 {
+
 	return run(new Board);
 }
 

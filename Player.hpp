@@ -2,18 +2,18 @@
 class Player : public GameObject
 {
 private:
-	int standardWidth;
+	int defaultWidth;
 public:
 	Player()
 	{
 		width = 100;
 		height = 25;
-		x = canvasWidth / 2 + width / 2;
-		y = canvasHeight - 50;
-		standardWidth = width;
+		position.x = canvasWidth / 2 + width / 2;
+		position.y = canvasHeight - 50;
+		defaultWidth = width;
 	}
-	int getStandartWidth()
+	int getDefaultWidth()
 	{
-		return standardWidth;
+		return defaultWidth;
 	}
 };

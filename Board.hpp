@@ -1,13 +1,13 @@
+
 struct corner // one of eight points on ball used to collision with blocks
 {
-	string name;
 	int x;
 	int y;
 };
 
 struct activeBooster //size booster actually possesed by player
 {
-	string type;
+	bType type;
 	time_t end;
 };
 
@@ -19,11 +19,13 @@ private:
 	int goldBlocksAmount = 0;
 	int collisionTime = 0; //used not to let the ball being reflected few times by rocket
 	int boosterCollisionTime = 300; //used not to let booster being takenfew times
-	int currentLevel = 1;
+	int currentLevel = 1; //change value if u want to start from another level
+	int maxLvl = 3;
 	//current position of mouse, updated in onMouseMove method
 	int mouseX;
 	int mouseY;
 
+	Sprite* lvlSprite[3];
 	Sprite* playerSprite[3]; //sprites used to animate player's rocket
 	Sprite* ballSprite;
 	Sprite* greenBlockSprite;
@@ -31,6 +33,7 @@ private:
 	Sprite* whiteBlockSprite;
 	Sprite* goldBlockSprite;
 	Sprite* backgroundSprite;
+	Sprite* winScreenSprite;
 	Sprite* flyingBoosterSprite[2]; //two sprites, [0] positive size booster, [1] negative size booster
 	 //sprites used to display boosters live time
 	Sprite* boosterTimerSprite[2];
@@ -58,9 +61,9 @@ private:
 
 	bool lose = false;
 
-	bool click = false;//false if any of mouse button is released
+	bool isAnyMouseButtonClicked = false;//false if any of mouse button is released
 
-	float ballInitialSpeedX = -0.6;
+	float ballInitialSpeedX = -0.5;
 	float ballInitialSpeedY = -0.8;
 public:
 
@@ -73,7 +76,7 @@ public:
 
 	virtual bool Init()
 	{
-		generateLevel(blocks, 1);
+		generateLevel(blocks, currentLevel);
 		playerSprite[0] = createSprite("data\\50-Breakout-Tiles.png");
 		setSpriteSize(playerSprite[0], player.getWidth(), player.getHeight());
 		playerSprite[1] = createSprite("data\\51-Breakout-Tiles.png");
@@ -81,6 +84,12 @@ public:
 		playerSprite[2] = createSprite("data\\52-Breakout-Tiles.png");
 		setSpriteSize(playerSprite[2], player.getWidth(), player.getHeight());
 
+		lvlSprite[0] = createSprite("data\\lvl1.png");
+		setSpriteSize(lvlSprite[0], 58, 62);
+		lvlSprite[1] = createSprite("data\\lvl2.png");
+		setSpriteSize(lvlSprite[1], 58, 62);
+		lvlSprite[2] = createSprite("data\\lvl3.png");
+		setSpriteSize(lvlSprite[2], 58, 62);
 
 		ballSprite = createSprite("data\\58-Breakout-Tiles.png");
 		setSpriteSize(ballSprite, ball.getWidth(), ball.getHeight());
@@ -92,6 +101,10 @@ public:
 
 		backgroundSprite = createSprite("data\\background.png");
 		setSpriteSize(backgroundSprite, 800, 600);
+
+		winScreenSprite = createSprite("data\\winScreen.png");
+		setSpriteSize(backgroundSprite, 800, 600);
+
 		loseScreenSprite = createSprite("data\\loseScreen.png");
 		setSpriteSize(backgroundSprite, 800, 600);
 		loseScreenHoveredSprite = createSprite("data\\loseScreenHovered.png");
@@ -143,14 +156,16 @@ public:
 			if (time2 >= time1)
 			{
 				time1 = time(NULL);
-				flyingBooster.setXrand();
+				flyingBooster.setRandomX();
 				flyingBooster.setY(100);
-				flyingBooster.setTypeRand();
+				flyingBooster.setRandomType();
 			}
 			flyingBooster.move();
 
 			//drawing some sprites
 			drawSprite(backgroundSprite, 0, 0);
+
+			drawSprite(lvlSprite[currentLevel - 1], 600, 10);
 
 			drawSprite(antyBoosterTimerSprite[0], 154, 36);
 			drawSprite(antyBoosterTimerSprite[1], 317, 36);
@@ -187,11 +202,11 @@ public:
 			ballRocketCollision();
 
 
-			if (flyingBooster.getType() == "positive")
+			if (flyingBooster.getType() == positive)
 			{
 				drawSprite(flyingBoosterSprite[0], flyingBooster.getX(), flyingBooster.getY());
 			}
-			else if (flyingBooster.getType() == "negative")
+			else if (flyingBooster.getType() == negative)
 			{
 				drawSprite(flyingBoosterSprite[1], flyingBooster.getX(), flyingBooster.getY());
 			}
@@ -235,26 +250,33 @@ public:
 		}
 		else if (lose == false)//next level setup
 		{
-			player.setWidth(player.getStandartWidth());
-			currentLevel++;
-			while (!activeBoosters.empty())
+			if (currentLevel < maxLvl)
 			{
-				activeBoosters.pop();
+				player.setWidth(player.getDefaultWidth());
+				currentLevel++;
+				while (!activeBoosters.empty())
+				{
+					activeBoosters.pop();
+				}
+				while (!blocks.empty())
+				{
+					blocks.pop();
+				}
+				ball.setSpeedX(ballInitialSpeedX);
+				ball.setSpeedY(ballInitialSpeedY);
+				cout << 1;
+				ball.setX(400);
+				ball.setY(500);
+				generateLevel(blocks, currentLevel);
 			}
-			while (!blocks.empty())
+			else
 			{
-				blocks.pop();
+				drawSprite(winScreenSprite, 0, 0);
 			}
-			ball.setSpeedX(ballInitialSpeedX);
-			ball.setSpeedY(ballInitialSpeedY);
-			cout << 1;
-			ball.setX(400);
-			ball.setY(500);
-			generateLevel(blocks, currentLevel);
 		}
 		else if (lose == true)//lose
 		{
-			player.setWidth(player.getStandartWidth());
+			player.setWidth(player.getDefaultWidth());
 			if (loseScreenHovered == false)
 			{
 				drawSprite(loseScreenSprite, 0, 0);
@@ -268,7 +290,7 @@ public:
 		if (mouseX > 152 && mouseX < 676 && mouseY > 254 && mouseY < 382)
 		{
 			loseScreenHovered = true;
-			if (click == true && lose == true)//game restart
+			if (isAnyMouseButtonClicked == true && lose == true)//game restart
 			{
 				lose = false;
 				while (!activeBoosters.empty())
@@ -319,11 +341,11 @@ public:
 	{
 		if (isReleased == true)
 		{
-			click = false;
+			isAnyMouseButtonClicked = false;
 		}
 		else
 		{
-			click = true;
+			isAnyMouseButtonClicked = true;
 		}
 	}
 	virtual void onKeyPressed(FRKey k)
@@ -333,6 +355,7 @@ public:
 	{
 	}
 private:
+
 	void workingBoosters() //used to change rocket size if booster is active and display booster time
 	{
 		time_t currTime;
@@ -344,14 +367,14 @@ private:
 			boostSize[i] = 1;
 		}
 		stack<activeBooster>newBoosterStack;
-		player.setWidth(player.getStandartWidth()); //setting rocket's standard width
+		player.setWidth(player.getDefaultWidth()); //setting rocket's default width
 		int j = 0;
 		while (!activeBoosters.empty())
 		{
 			boosterGraphicTime = activeBoosters.top().end - currTime;
 			if (activeBoosters.top().end > currTime)//checking if booster is active
 			{
-				if (activeBoosters.top().type == "negative")
+				if (activeBoosters.top().type == negative)
 				{
 					boostSize[j] = 0.6;//negative booster multiplier
 					//changing sprite size depending on how much time is left
@@ -388,19 +411,19 @@ private:
 			j++;
 			activeBoosters.pop();
 		}
-		int actualPlayerSize = player.getStandartWidth();
+		int actualPlayerSize = player.getDefaultWidth();
 		//add up boosters
 		for (int i = 0; i < 10; i++)
 		{
 			actualPlayerSize *= boostSize[i];
 		}
-		if (actualPlayerSize < 0.5 * player.getStandartWidth())
+		if (actualPlayerSize < 0.5 * player.getDefaultWidth())
 		{
-			actualPlayerSize = 0.5 * player.getStandartWidth();//max negative boost
+			actualPlayerSize = 0.5 * player.getDefaultWidth();//max negative boost
 		}
-		else if (actualPlayerSize > 2 * player.getStandartWidth())
+		else if (actualPlayerSize > 2 * player.getDefaultWidth())
 		{
-			actualPlayerSize = 2 * player.getStandartWidth();//max positive boost
+			actualPlayerSize = 2 * player.getDefaultWidth();//max positive boost
 		}
 		//used to reverse newBooster stack
 		stack<activeBooster> toReverseStack;
@@ -432,35 +455,35 @@ private:
 		stack<Block> newBlocksStack;
 		int cornersCount = 8;
 		corner ballCorners[8];//eight points on the ball
-		ballCorners[0].name = "up-left";
+		//up-left
 		ballCorners[0].x = ball.getX() + ball.getWidth() * 1 / 6;
 		ballCorners[0].y = ball.getY() + ball.getHeight() * 1 / 6;
 
-		ballCorners[1].name = "up";
+		//up
 		ballCorners[1].x = ball.getX() + ball.getWidth() / 2;
 		ballCorners[1].y = ball.getY();
 
-		ballCorners[2].name = "up-right";
+		//up-right"
 		ballCorners[2].x = ball.getX() + ball.getWidth() * 5 / 6;
 		ballCorners[2].y = ball.getY() + ball.getHeight() * 1 / 6;
 
-		ballCorners[3].name = "left";
+		//left"
 		ballCorners[3].x = ball.getX();
 		ballCorners[3].y = ball.getY() + ball.getHeight() / 2;
 
-		ballCorners[4].name = "right";
+		//right
 		ballCorners[4].x = ball.getX() + ball.getWidth();
 		ballCorners[4].y = ball.getY() + ball.getHeight() / 2;
 
-		ballCorners[5].name = "bottom-left";
+		//bottom-left
 		ballCorners[5].x = ball.getX() + ball.getWidth() * 1 / 6;
 		ballCorners[5].y = ball.getY() + ball.getHeight() * 5 / 6;
 
-		ballCorners[6].name = "bottom";
+		//bottom
 		ballCorners[6].x = ball.getX() + ball.getWidth() / 2;
 		ballCorners[6].y = ball.getY() + ball.getHeight();
 
-		ballCorners[7].name = "bottom-right";
+		//bottom-right
 		ballCorners[7].x = ball.getX() + ball.getWidth() * 5 / 6;
 		ballCorners[7].y = ball.getY() + ball.getHeight() * 5 / 6;
 
@@ -482,6 +505,7 @@ private:
 			}
 			if (cornerInside != -1)
 			{
+				//PlaySound(TEXT("ball.wav"), NULL, SND_FILENAME | SND_ASYNC);
 				float safetyTeleport = 3;
 
 				if (cornerInside == 0) //corner number 0 collision actitions
